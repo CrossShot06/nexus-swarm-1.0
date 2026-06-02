@@ -12,7 +12,7 @@ class SandboxOrchestrator :
         self.image = "nexus-swarm:latest"
         self.client = docker.from_env()
 
-    def execute_cpp(self,user_prompt):
+    def execute_cpp(self,user_prompt,run_args=""):
 
         max_retries = 3
 
@@ -41,13 +41,17 @@ class SandboxOrchestrator :
                 try :
                     output = self.client.containers.run(
                         image=self.image,
-                        command="sh -c 'g++ main.cpp -o main && ./main'",
+                        command=f"sh -c 'g++ main.cpp -o main && ./main {run_args}'",
                         remove=True,
                         volumes=volume_binding,
                         working_dir="/sandbox",
                         mem_limit='512m',
                         network_disabled=True,
                     )
+
+                    print("\n=== GENERATED C++ CODE ===")
+                    print(code_string)
+                    print("==========================\n")
 
                     return f"SUCCESS:\n{output.decode('utf-8')}"
                 
@@ -58,6 +62,8 @@ class SandboxOrchestrator :
                     error_logs = e.stderr.decode('utf-8') if e.stderr else str(e)
 
                     print(f"\n[!] Compilation Failed. AI is self-healing (Attempt {retries}/3)...")
+
+                    print(f"--- COMPILER ERROR ---\n{error_logs.strip()}\n----------------------")
 
                     recovery_prompt = f"""The C++ code you just provided failed to compile. 
 
@@ -87,8 +93,9 @@ class SandboxOrchestrator :
 if __name__ == "__main__" :
     sandbox = SandboxOrchestrator()
     
-    prompt = input("Enter your prompt to generate the code")
+    prompt = input("Enter your prompt to generate the code\n")
 
+    arguments = input("Enter runtime arguments (e.g., '15' for N). Press Enter if none:\n> ")
 
-    print("Running Good Code...")
-    print(sandbox.execute_cpp(prompt))
+    print("Running Code...")
+    print(sandbox.execute_cpp(prompt,arguments))
