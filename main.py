@@ -2,6 +2,8 @@ import docker
 import tempfile
 import os
 
+from ollama import chat
+
 from ai_brain import AIBrain
 from docker.errors import ContainerError
 
@@ -13,12 +15,38 @@ class SandboxOrchestrator :
         self.client = docker.from_env()
 
     def execute_cpp(self,user_prompt,run_args=""):
+        
 
-        max_retries = 3
+        manager_prompt = """You are a Senior C++ Software Architect. 
+                            Your job is to analyze the user's request and write a strict, step-by-step technical blueprint for a junior developer.
+                            Detail the exact logic flow, required functions, and edge cases.
+                            CRITICAL: Do NOT write any C++ code. Only write the architecture plan in plain text.
+                            CRITICAL: Remind the developer they must use `argv` for dynamic inputs, not `std::cin`."""
 
-        brain = AIBrain()
 
-        code_string = brain.ask(user_prompt)
+        coder_prompt = """You are an automated C++ backend compilation assistant. 
+                        Your absolute priority is to generate syntactically perfect, highly optimized C++ code.
+
+                        CRITICAL RULES:
+                        1. You MUST place all executable C++ code strictly inside <code_block> and </code_block> tags.
+                        2. Do NOT use markdown code fences (like ```cpp) inside or outside the tags.
+                        3. Any explanations, thought processes, or debugging analysis MUST be placed OUTSIDE the <code_block> tags.
+                        4. If the user provides a COMPILER ERROR, your sole job is to analyze the log, fix the code, and return the complete corrected source code inside the <code_block> tags.
+                        5. NEVER use `std::cin` for user input. Your code will run in a headless Docker sandbox and will freeze. You MUST accept all dynamic user inputs via command-line arguments using `int main(int argc, char* argv[])"""
+
+
+
+        max_retries = 5
+
+        manager_brain = AIBrain(manager_prompt,model_name="llama3.1")
+
+        coder_brain = AIBrain(coder_prompt,model_name="qwen2.5-coder:7b")
+
+        blueprint = manager_brain.ask(user_prompt,unload_after=True)
+
+        print(f"HERE IS THE BLUEPRINT : \n {blueprint}")
+
+        code_string = coder_brain.ask(blueprint)
 
         retries = 0
 
@@ -61,7 +89,7 @@ class SandboxOrchestrator :
 
                     error_logs = e.stderr.decode('utf-8') if e.stderr else str(e)
 
-                    print(f"\n[!] Compilation Failed. AI is self-healing (Attempt {retries}/3)...")
+                    print(f"\n[!] Compilation Failed. AI is self-healing (Attempt {retries}/{max_retries})...")
 
                     print(f"--- COMPILER ERROR ---\n{error_logs.strip()}\n----------------------")
 
@@ -79,13 +107,15 @@ class SandboxOrchestrator :
                                             {error_logs}
                                             </error_log>"""
                     
-                    code_string = brain.ask(recovery_prompt)
+                    code_string = coder_brain.ask(recovery_prompt)
 
                 except Exception as e:
 
                     return f"SYSTEM CRASH: {str(e)}"
                 
-        return "FAILED: The AI could not fix the code after 3 attempts."
+        chat(model="qwen2.5-coder:7b", keep_alive=0)
+                
+        return f"FAILED: The AI could not fix the code after {max_retries} attempts."
 
         
         

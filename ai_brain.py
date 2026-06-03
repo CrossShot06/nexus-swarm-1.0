@@ -6,28 +6,23 @@ from ollama import chat
 
 class AIBrain():
 
-    def __init__(self,role="""You are an automated C++ backend compilation assistant. 
-Your absolute priority is to generate syntactically perfect, highly optimized C++ code.
-
-CRITICAL RULES:
-1. You MUST place all executable C++ code strictly inside <code_block> and </code_block> tags.
-2. Do NOT use markdown code fences (like ```cpp) inside or outside the tags.
-3. Any explanations, thought processes, or debugging analysis MUST be placed OUTSIDE the <code_block> tags.
-4. If the user provides a COMPILER ERROR, your sole job is to analyze the log, fix the code, and return the complete corrected source code inside the <code_block> tags.
-5. NEVER use `std::cin` for user input. Your code will run in a headless Docker sandbox and will freeze. You MUST accept all dynamic user inputs via command-line arguments using `int main(int argc, char* argv[])"""):
+    def __init__(self,system_prompt,model_name):
         
-        self.model = "llama3.1"
+        self.model = model_name
         self.messages = [
-            {"role":"system","content":role}
+            {"role":"system","content":system_prompt}
                          ]
     
-    def ask(self,user_prompt):
+    def ask(self,user_prompt,unload_after=False):
 
         self.messages.append({"role":"user","content":user_prompt})
 
+        keep_alive_val = 0 if unload_after else "5m"
+
         response : ChatResponse = chat(
             model = self.model,
-            messages=self.messages
+            messages=self.messages,
+            keep_alive=keep_alive_val
         )
 
         ai_reply = response['message']['content']
@@ -46,7 +41,8 @@ CRITICAL RULES:
        
         clean_code = re.sub(r'```[a-zA-Z\+]*', '', clean_code)
         
-       
+        clean_code = clean_code.replace('```', '')
+        
         if not match:
              if "#include" in clean_code:
                  clean_code = clean_code[clean_code.find("#include"):]
