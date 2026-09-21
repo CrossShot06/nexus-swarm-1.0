@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS // ORBITAL COMMAND</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+    <div class="scanlines"></div>
+
+    <div class="tactical-grid">
+        
+        <div class="pane flex-col">
+            <div class="pane-header">
+                <span>[01] UPLINK_DIRECTIVE</span>
+                <span class="hl-text">SYS.IDLE</span>
+            </div>
+            <div class="pane-content uplink-container">
+                <div class="input-matrix">
+                    <label>TARGET ARCHITECTURE</label>
+                    <textarea id="promptInput" rows="5" placeholder="INITIALIZE SEQUENCE..."></textarea>
+                    
+                    <label>RUNTIME VECTORS</label>
+                    <input type="text" id="argsInput" placeholder="NULL">
+                    
+                    <button id="runBtn" onclick="startSwarm()">TRANSMIT DIRECTIVE</button>
+                </div>
+                
+                <div class="core-visualizer">
+                    <div class="wire-cube">
+                        <div class="face front"></div><div class="face back"></div>
+                        <div class="face right"></div><div class="face left"></div>
+                        <div class="face top"></div><div class="face bottom"></div>
+                    </div>
+                    <div class="scan-bar"></div>
+                    <div class="vis-label">NODE_001 <span style="color: var(--accent);">[ONLINE]</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pane flex-col">
+            <div class="pane-header">
+                <span>[02] HARDWARE_TELEMETRY</span>
+                <span class="hl-text">RTX_4050</span>
+            </div>
+            <div class="pane-content telemetry-matrix">
+                
+                <div class="tel-block">
+                    <div class="tel-header">
+                        <span>VRAM ALLOCATION</span>
+                        <span id="vramValue" class="hl-text">412 MB</span>
+                    </div>
+                    <div class="segmented-track"><div id="vramBar" class="segmented-fill" style="width: 5%;"></div></div>
+                </div>
+
+                <div class="tel-block">
+                    <div class="tel-header">
+                        <span>CORE THERMALS</span>
+                        <span id="tempValue" class="hl-text">42 °C</span>
+                    </div>
+                    <canvas id="tempChart" width="300" height="60"></canvas>
+                </div>
+
+                <div class="tel-block">
+                    <div class="tel-header">
+                        <span>EXECUTION VELOCITY</span>
+                        <span id="speedValue" class="hl-text">0.0 THz</span>
+                    </div>
+                    <canvas id="speedChart" width="300" height="60"></canvas>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="pane flex-col">
+            <div class="pane-header">
+                <span>[03] MEMORY_BANKS</span>
+                <div class="tab-controls">
+                    <button class="tab-btn active" onclick="switchDataTab(event, 'blueprint')">BLUEPRINT</button>
+                    <button class="tab-btn" onclick="switchDataTab(event, 'code')">SOURCE_CODE</button>
+                    <button class="tab-btn" onclick="switchDataTab(event, 'errors')">ERRORS</button>
+                    <button class="tab-btn" onclick="switchDataTab(event, 'archive'); loadArchive();">ARCHIVE</button>
+                </div>
+            </div>
+            <div class="pane-content data-banks">
+                <div id="bank-blueprint" class="data-stream active"><span class="muted">Awaiting architecture...</span></div>
+                <div id="bank-code" class="data-stream"><span class="muted">Awaiting compilation...</span></div>
+                <div id="bank-errors" class="data-stream"><span class="muted">No anomalies detected.</span></div>
+                <div id="bank-archive" class="data-stream"><span class="muted">Awaiting uplink...</span></div>
+            </div>
+            
+        </div>
+
+        <div class="pane flex-col">
+            <div class="pane-header">
+                <span>[04] MAIN_STDOUT</span>
+                <span class="hl-text flashing">REC</span>
+            </div>
+            <div id="terminal" class="pane-content terminal-view">
+                <span class="log-sys">> UPLINK ESTABLISHED. WAITING FOR DIRECTIVE...</span><br>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
