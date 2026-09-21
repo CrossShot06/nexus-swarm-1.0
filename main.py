@@ -5,6 +5,8 @@ import re
 
 from ollama import chat
 from ai_brain import AIBrain 
+
+from ai_brain import AIBrain
 from docker.errors import ContainerError
 
 
